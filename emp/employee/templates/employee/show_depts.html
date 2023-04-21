@@ -1,0 +1,46 @@
+<!DOCTYPE html>  
+<html lang="en"> 
+    <style>
+        td, th {
+    border: 1px solid #777;
+    padding: 0.5rem;
+    text-align: center;
+}
+ 
+table {
+    border-collapse: collapse;
+}
+ 
+tbody tr:nth-child(odd) {
+    background: #eee;
+}
+caption {
+    font-size: 0.8rem;
+}
+    </style> 
+<head>  
+    <meta charset="UTF-8">  
+    <title>Department Records</title>  
+</head>  
+<body>  
+<table align="center" class="table table-striped table-bordered table-sm">  
+    <thead class="thead-dark">  
+    <tr>  
+        <th>Department id</th>  
+        <th>Department Name</th>  
+    </tr>  
+    </thead>  
+    <tbody>  
+{% for dept in departments %}  
+    <tr>   
+        <td>{{ dept.edept }}</td>  
+        <td>{{ dept.edepname }}</td>  
+    </tr>  
+{% endfor %}  
+    </tbody>  
+</table>  
+<br>  
+<br>  
+<center><a href="/" class="btn btn-primary">back</a></center>  
+</body>  
+</html>  

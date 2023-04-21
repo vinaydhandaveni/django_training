@@ -1,0 +1,13 @@
+<!DOCTYPE hmtl>
+<head>
+    SEARCH
+
+</head>
+<body>
+<form method="POST" action="/search">
+    {% csrf_token %}
+Enter id of the employee <input type="number" class="a" name="itsid" id="id">
+<input type=submit name="submit" value="Submit" />
+</form>
+</body>
+</html>

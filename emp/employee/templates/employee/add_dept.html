@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<head>
+<p align=""center>Add Department
+</head>
+<body>
+    <form method="POST" class="post-form" action="/dept">
+        {% csrf_token %}
+        Deptid<input type="number" name="did" id="idx"><br/>
+        Dept name<input type="text" name="dname"><br/>
+        <input type="submit" value="submit">
+    </form>

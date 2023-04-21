@@ -1,0 +1,20 @@
+<!DOCTYPE html>  
+<html lang="en">  
+<head>  
+    <meta charset="UTF-8">  
+    <title>Index</title>  
+     
+</head>  
+<body>  
+<form method="POST" class="post-form" action="/emp">  
+    {% csrf_token %}
+    Enter EMP No : <input type=text name="eno"><br>
+    Enter EMP Name : <input type=text name="name"><br>
+    Enter email : <input type=text name="email"><br>
+    Enter contact number : <input type=text name="con">
+    Enter Dept : <input type="text" name="edept">
+    <input type=submit value=Submit>
+</form>  
+
+</body>  
+</html>  
