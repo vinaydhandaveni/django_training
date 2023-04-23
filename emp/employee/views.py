@@ -15,8 +15,10 @@ from django.contrib.auth.models import User
 from rest_framework import permissions,viewsets
 from .permissions import isowner_readonly
 from rest_framework.reverse import reverse
+from django.contrib.auth import authenticate,login,logout
 import csv
-class try_csv_dept(View):
+#to return department details
+class try_csv_dept(View): 
     def get(self,request):
         response=HttpResponse(
             content_type='text/csv',headers={"Content-Disposition":'attachment; filename="dept.csv"',}
@@ -24,8 +26,7 @@ class try_csv_dept(View):
         writer=csv.writer(response)
         writer.writerow(["DeptNo","DeptName"])
         depts=Dept.objects.all()
-        for d in depts:
-            writer.writerow([d.edept,d.edepname])
+        writer.writerows([d.edept,d.edepname] for d in depts)
         return response
 
 # Create your views here.
@@ -286,3 +287,22 @@ class EmpViewSet(viewsets.ModelViewSet):
     serializer_class=EmployeeSerializer
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+class Loginpage(View):
+    def get(self,request):
+        return render(request,'employee/login.html',{})
+class Login(View):
+    def post(self,request):
+        username=request.POST["uname"]
+        password=request.POST["psw"]
+        user=authenticate(request,username=username,password=password)
+        if user is not None:
+            login(request,user)
+            return render(request,'employee/main.html',{})
+        else :
+            return render(request,'employee/login.html',{"message":"Please enter valid Details"})
+        
+class Logout(View):
+    def get(self,request):
+        logout(request)
+        return render(request,'employee/login.html',{})
+
