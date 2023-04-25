@@ -12,14 +12,15 @@
     {% csrf_token %}
         <label> <b>Username</b></label>
       <input type="text" placeholder="Enter Username" name="uname" required>
-  
+        <br />
       <label for="psw"><b>Password</b></label>
       <input type="password" placeholder="Enter Password" name="psw" required>
-  
-      <button type="submit">Login</button>
+        <br />
+      <button type="submit">Login</button><br />
+      <a href="signup_page">Sign up</a><br />
+      <a href="upda">update password</a><br />
+      <a href="forgot">Forgot Password</a><br />
       <p><b>{{message}}<b></p>
-     
-   
   </form>
   </body>
   </html>

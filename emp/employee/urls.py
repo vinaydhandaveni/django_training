@@ -12,9 +12,19 @@ user_detail=UserViewSet.as_view({'get':'retrieve'})
 '''
 urlpatterns = [  
     path("",views.Loginpage.as_view(),name="login"),
-    path("login",views.Login.as_view()),
+    path("login",views.Loginpage.as_view()),
     path("logout",views.Logout.as_view()),
-    path("main",views.main),
+    path("signup_page",views.signup_page.as_view()),
+    path('upda',views.update_password.as_view()),
+    path('checkuser',views.checkuser.as_view()),
+    path('update',views.update_password.as_view()),
+    path('forgot',views.forgot.as_view()),
+    path('forgotp',views.forgotpassword.as_view()),
+    path('reset/(?P<uidb64>[0-9A-Za-z_\-]+)/',views.reset.as_view(),name="reset"),
+    path('reset/(?P<uidb64>[0-9A-Za-z_\-]+)/reset',views.reset.as_view()),
+
+    
+    path("main",views.main,name="main"),
     path("index/",views.index),
     path('admin/', admin.site.urls),  
     path('emp', views.emp), 

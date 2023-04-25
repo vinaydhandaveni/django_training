@@ -16,6 +16,12 @@ from rest_framework import permissions,viewsets
 from .permissions import isowner_readonly
 from rest_framework.reverse import reverse
 from django.contrib.auth import authenticate,login,logout
+from django.contrib.auth.hashers import make_password
+from django.contrib.sites.shortcuts import get_current_site 
+from django.core.mail import EmailMessage,send_mail
+from django.template.loader import render_to_string 
+from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
+from django.utils.encoding import force_bytes,force_text
 import csv
 #to return department details
 class try_csv_dept(View): 
@@ -287,10 +293,10 @@ class EmpViewSet(viewsets.ModelViewSet):
     serializer_class=EmployeeSerializer
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+        #Login an existing user
 class Loginpage(View):
     def get(self,request):
         return render(request,'employee/login.html',{})
-class Login(View):
     def post(self,request):
         username=request.POST["uname"]
         password=request.POST["psw"]
@@ -300,9 +306,99 @@ class Login(View):
             return render(request,'employee/main.html',{})
         else :
             return render(request,'employee/login.html',{"message":"Please enter valid Details"})
-        
+        #logging out an existing user
 class Logout(View):
     def get(self,request):
         logout(request)
         return render(request,'employee/login.html',{})
+        #signing up an new user
+class signup_page(View):
+    def get(self,request):
+        return render(request,'employee/signup.html',{})
+    def post(self,request):
+        username=request.POST["uname"]
+        password=request.POST["psw"]
+        mail=request.POST["mail"]
+        rpassword=request.POST["rpsw"]
+        if password==rpassword:
+            try:
+                user=User.objects.create(username=username,password=make_password(password),email=mail)
+                user.save()
+                login(request,user)
+                return render(request,'employee/main.html',{})
+            except:
+                pass
+            return redirect("login")
+        else:
+            return render(request,'employee/signup.html',{"message":"Both passwords dont match"})
 
+class checkuser(View):
+    def post(self,request):
+        username=request.POST["uname"]
+        try:
+            users=User.objects.get(username=username)
+            return render(request,"employee/password.html",{"user":username})
+        except:
+            return render(request,"employee/updatep.html",{"message":"please enter a valid username"})
+class update_password(View):
+    def get(self,request):
+        return render(request,"employee/updatep.html",{})
+    def post(self,request):
+        username=request.POST["user"]
+        password=request.POST["psw"]
+        password2=request.POST["npsw"]
+        password3=request.POST["rnpsw"]
+        if not password3==password2:
+            return render(request,'employee/password.html',{"message":"Both new passwords dont match"})
+        user=authenticate(request,username=username,password=password)
+        if user is not None:
+            user.set_password(password2)
+            user.save()
+            login(request,user)
+            return render(request,'employee/main.html',{})
+        else:
+            return render(request,'employee/password.html',{"message":"Wrong login Details"})
+        
+class forgot(View):
+    def get(self,request):
+        return render(request,"employee/forgot.html",{})
+class forgotpassword(View):
+    def post(self,request):
+        username=request.POST["uname"]
+        user1=User.objects.get(username=username)
+        current_site = get_current_site(request)  
+        mail_subject = 'reset link has been sent to your email id'  
+        message = render_to_string('employee/forgotpassword.html', {  
+                'user':user1,
+                'domain': current_site.domain,  
+                'uid':urlsafe_base64_encode(force_bytes(user1.pk)),  
+            }) 
+        to_email = user1.email
+        #return HttpResponse(message +to_email)
+        send_mail(mail_subject,message,from_email="vinaydhandaveni@gmail.com",recipient_list=[to_email],fail_silently=False)
+        '''
+        email = EmailMessage(  
+                        mail_subject, message, to=[to_email]  
+            )  
+        email.send()  
+        '''
+        return HttpResponse('Please go to your registered mail to reset password')  
+    
+class reset(View):
+    def get(self,request,uidb64):    
+        #uid = force_text(urlsafe_base64_decode(uidb64))  
+        #user = User.objects.get(pk=uid)    
+        return render(request,'employee/passreset.html',{})  
+        #return HttpResponse('Activation link is invalid!')  
+        
+    def post(self,request,uidb64):
+        uid = force_text(urlsafe_base64_decode(uidb64))  
+        user = User.objects.get(pk=uid)
+        password2=request.POST["psw"]
+        password3=request.POST["npsw"]
+        if not password3==password2:
+            return render(request,'employee/passreset.html',{"message":"Both new passwords dont match"})
+        user.set_password(password2)
+        user.save()
+        login(request,user)
+        return redirect('main')
