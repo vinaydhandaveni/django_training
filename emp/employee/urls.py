@@ -4,7 +4,10 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from employee import views  
 from employee.views import UserViewSet,DeptViewSet,EmpViewSet
 from rest_framework.routers import DefaultRouter
+from django.conf import settings
+from django.conf.urls.static import static
 '''
+
 dept_list=DeptViewSet.as_view({'get':'list','post':'create'})
 user_list=UserViewSet.as_view({'get':'list'})
 dept_detail=DeptViewSet.as_view({'get':'retrieve','put':'update','patch':'partial_update'})
@@ -38,7 +41,7 @@ urlpatterns = [
     path('adddept',views.adddept),
     #path('dept',views.deptList.as_view(),name="dept-list"),
     #path('dept',dept_list,name="dept-list"),
-    path('show_all',views.show_all),
+    path('show_all',views.Show_all.as_view()),
     path('edit_dept',views.edit_dept),
     #path('dept/<int:pk>',views.dep_detail.as_view(),name="dept-detail"),
     #path('dept/<int:pk>/',views.dep_detail.as_view(),name="dep-detail"),
@@ -54,7 +57,10 @@ urlpatterns = [
     #path('search/<string:ename>',)
     path('dep_csv',views.try_csv_dept.as_view())
 ]  
+if settings.DEBUG:
+ urlpatterns+=static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
 urlpatterns=format_suffix_patterns(urlpatterns)
+
 
 router = DefaultRouter()
 router.register(r'dept', views.DeptViewSet,basename="dept")

@@ -23,6 +23,14 @@ from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode,urlsafe_base64_decode
 from django.utils.encoding import force_bytes,force_text
 import csv
+import time
+import datetime
+from datetime import timedelta,timezone
+from django.db.models import Prefetch
+import dateutil
+from dateutil import parser
+from django.db import transaction
+from django.core.files import File
 #to return department details
 class try_csv_dept(View): 
     def get(self,request):
@@ -38,7 +46,7 @@ class try_csv_dept(View):
 # Create your views here.
 def emp(request): #add employee 
     D=Dept.objects.get(edept=request.POST["edept"]) 
-    q=Employee(ename=request.POST["name"],eid=request.POST["eno"],econtact=request.POST["con"],eemail=request.POST["email"],edept=D)
+    q=Employee(ename=request.POST["name"],eid=request.POST["eno"],econtact=request.POST["con"],eemail=request.POST["email"],edept=D,owner_id=request.user.id)
     q.save()
     return render(request,'employee/main.html',{})  
 
@@ -51,6 +59,9 @@ def index(request):  #input for a new employee
 def show(request):  #show all employee details
     #to display all the employee details based on employee id
     employees = Employee.objects.all().order_by("eid")
+    '''a=Employee.objects.defer("edept")
+    for b in a:
+        l=b.edept'''
     return render(request,"employee/show.html",{'employees':employees}) 
  
 def searchy(request): #input for id to search an employee
@@ -66,6 +77,7 @@ def edit(request, id):  #edit employee
 
 def destroy(request, id):  #delete employee 
     employee = Employee.objects.get(id=id)  
+    employee.image.delete()
     employee.delete()  
     return redirect("/show") 
 
@@ -78,12 +90,12 @@ def update(request, id):  #update employee details
     employee.edept=request.POST["edept"]
     employee.save()
     employees=Employee.objects.all()
-    return render(request,"employee/show.html",{'employees':employees}) 
+    return render(request,"employee/show.html",{'employees':employees})
 
 def search(request):#search an employee in db
     idn=request.POST["itsid"]
-    emp=[Employee.objects.get(eid=idn)]
-    return render(request,"employee/show.html",{'employees':emp})
+    obje=[Employee.objects.search_related('edept').get(eid=idn)]
+    return render(request,"employee/show.html",{'employees':obje})
 
 def adddept(request):#adding department to db
     d=Dept(edept=request.POST["did"],edepname=request.POST["dname"])
@@ -97,20 +109,10 @@ def edit_dept(request):
     depart = Dept.objects.all()  
     return render(request,"employee/show_depts.html",{'departments':depart})'''
 
-def show_all(request):#employee details along with depatment name
-    List1=[]
-    obje=Employee.objects.all().order_by("eid")
-    depts=Dept.objects.all()
-    for obj in obje:
-        all_details=dict()
-        dep=depts.get(edept=obj.edept)
-        all_details["empid"]=obj.eid
-        all_details["empname"]=obj.ename
-        all_details["empcontact"]=obj.econtact
-        all_details["empemail"]=obj.eemail
-        all_details["deptname"]=dep.edepname
-        List1.append(all_details)
-    return render(request,"employee/show_all.html",{"all_det":List1})
+class Show_all(View):#employee details along with department name
+    def get(self,request):
+        obje=Employee.objects.prefetch_related('edept').all()
+        return render(request,"employee/show_all.html",{"all_det":obje})
 ''' #not working
 def showy(request):
     c=connection.cursor()
@@ -365,34 +367,36 @@ class forgot(View):
 class forgotpassword(View):
     def post(self,request):
         username=request.POST["uname"]
-        user1=User.objects.get(username=username)
-        current_site = get_current_site(request)  
-        mail_subject = 'reset link has been sent to your email id'  
-        message = render_to_string('employee/forgotpassword.html', {  
+        try:
+            user1=User.objects.get(username=username)
+            current_site = get_current_site(request)
+            ct= datetime.datetime.now(timezone.utc)
+            mail_subject = 'reset link has been sent to your email id'  
+            message = render_to_string('employee/forgotpassword.html', {  
                 'user':user1,
                 'domain': current_site.domain,  
-                'uid':urlsafe_base64_encode(force_bytes(user1.pk)),  
-            }) 
-        to_email = user1.email
-        #return HttpResponse(message +to_email)
-        send_mail(mail_subject,message,from_email="vinaydhandaveni@gmail.com",recipient_list=[to_email],fail_silently=False)
-        '''
-        email = EmailMessage(  
-                        mail_subject, message, to=[to_email]  
-            )  
-        email.send()  
-        '''
-        return HttpResponse('Please go to your registered mail to reset password')  
+                'uid':urlsafe_base64_encode(force_bytes(str(user1.pk)+"and"+str(ct))) 
+                }) 
+            to_email = user1.email
+            send_mail(mail_subject,message,from_email="vinaydhandaveni@gmail.com",recipient_list=[to_email],fail_silently=False)
+            return HttpResponse('Please go to your registered mail to reset password')  
+        except(User.DoesNotExist):
+            return render(request,"employee/forgot.html",{"message":"Wrong User Name"})
     
 class reset(View):
-    def get(self,request,uidb64):    
-        #uid = force_text(urlsafe_base64_decode(uidb64))  
-        #user = User.objects.get(pk=uid)    
-        return render(request,'employee/passreset.html',{})  
-        #return HttpResponse('Activation link is invalid!')  
+    def get(self,request,uidb64):
+        uid = force_text(urlsafe_base64_decode(uidb64)) 
+        [uid,time]=uid.split('and')
+        currenttime=datetime.datetime.now(timezone.utc)
+        requested_time=parser.parse(time)
+        time_difference=currenttime-requested_time
+        if time_difference.total_seconds()>=120:
+            return HttpResponse("Link Expired")       
+        return render(request,'employee/passreset.html',{})
         
     def post(self,request,uidb64):
-        uid = force_text(urlsafe_base64_decode(uidb64))  
+        uid = force_text(urlsafe_base64_decode(uidb64)) 
+        [uid,time]=uid.split('and')
         user = User.objects.get(pk=uid)
         password2=request.POST["psw"]
         password3=request.POST["npsw"]

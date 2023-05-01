@@ -30,6 +30,7 @@ caption {
         <th>Employee Name</th>  
         <th>Employee Email</th>  
         <th>Employee Contact</th> 
+        <th>Employee Image</th>
         <th>Employee Dept</th>
         <th>Action1</th>  
         <th>Action2</th>
@@ -42,7 +43,8 @@ caption {
         <td>{{ employee.ename }}</td>  
         <td>{{ employee.eemail }}</td>  
         <td>{{ employee.econtact }}</td>
-        <td>{{employee.edept}}</td>
+        <td><img src="{{employee.image.url}}" width="40" height="30"></td>
+        <td>{{ employee.edept.edepname}}</td>
         <td>  
             <a href="/edit/{{ employee.id }}"><span class="glyphicon glyphicon-pencil" >Edit</span></a> 
         </td>
@@ -51,9 +53,9 @@ caption {
         </td>  
     </tr>  
 {% endfor %}  
-    </tbody>  
+   
 </table>  
-<br>  
+
 <br>  
 <center><a href="/index" class="btn btn-primary">Add New Record</a></center>  
 <center><a href="/main">back_to_main</a></center>

@@ -14,7 +14,7 @@ class Employee(models.Model):
     eemail = models.EmailField()  
     edept= models.ForeignKey(Dept,on_delete=models.CASCADE,null=True)
     econtact = models.CharField(max_length=15) 
+    image=models.ImageField(blank=True)
     owner = models.ForeignKey('auth.User', related_name='employee', on_delete=models.CASCADE)
     def __str__(self):
         return self.ename 
-# Create your models here.
